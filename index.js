@@ -1,3 +1,4 @@
+const Joi = require('joi');
 const express = require('express');
 const app = express();
 
@@ -25,6 +26,12 @@ app.get('/api/genres/:id', (req, res) => {
 });
 
 app.post('/api/genres', (req, res) => {
+  const { error } = validateGenre(req.body);
+  if (error) {
+    res.status(400).send(error.details[0].message);
+    return;
+  }
+
   const genre = {
     id: genres.length + 1,
     name: req.body.name
@@ -37,6 +44,12 @@ app.put('/api/genres/:id', (req, res) => {
   const genre = genres.find(g => g.id === parseInt(req.params.id));
   if (!genre) {
     res.status(404).send('The genre you looking for update is not found!!');
+    return;
+  }
+
+  const { error } = validateGenre(req.body);
+  if (error) {
+    res.status(400).send(error.details[0].message);
     return;
   }
 
@@ -55,6 +68,16 @@ app.delete('/api/genres/:id', (req, res) => {
   genres.splice(index, 1);
   res.send(genre);
 });
+
+function validateGenre(genre) {
+  const schema = {
+    name: Joi.string()
+      .min(3)
+      .required()
+  };
+
+  return Joi.validate(genre, schema);
+}
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
